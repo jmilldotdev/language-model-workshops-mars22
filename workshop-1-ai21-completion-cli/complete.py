@@ -1,16 +1,16 @@
 import os
 import argparse
+from pathlib import Path
+
 import requests
 from dotenv import load_dotenv
 
-DOTENV_PATH = ".env"
+DOTENV_PATH = Path(__file__).parent / ".env"
 load_dotenv(DOTENV_PATH)
 AI21_API_KEY = os.getenv("AI21_API_KEY")
 
 
-def complete(prompt, model="j1-jumbo"):
-    print(prompt)
-    print(model)
+def complete(prompt, model="j1-jumbo", max_tokens=64):
     api_url = f"https://api.ai21.com/studio/v1/{model}/complete"
     headers = {
         "Authorization": f"Bearer {AI21_API_KEY}",
@@ -18,14 +18,15 @@ def complete(prompt, model="j1-jumbo"):
     }
     data = {
         "prompt": prompt,
+        "maxTokens": max_tokens,
     }
     response = requests.post(api_url, json=data, headers=headers)
-    print(response.json())
     if response.status_code == 200:
         completion = response.json()["completions"][0]["data"]["text"]
         print(prompt + completion)
     else:
         print("Error fetching")
+        print(response.text)
 
 
 if __name__ == "__main__":
@@ -38,6 +39,7 @@ if __name__ == "__main__":
         default="ji-jumbo",
         help="Model to use",
     )
+    parser.add_argument("--max-tokens", type=int, default=64, help="Max tokens")
     args = parser.parse_args()
     if args.prompt:
-        complete(args.prompt, args.model)
+        complete(args.prompt, args.model, args.max_tokens)
